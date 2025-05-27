@@ -21,6 +21,7 @@
 // Custom Debug.h
 #include "../../../DebugHelper.h"
 
+
 // Sets default values
 APlayerCharacter::APlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer.SetDefaultSubobjectClass<UPlayer_CMC>(ACharacter::CharacterMovementComponentName))
@@ -205,6 +206,7 @@ void APlayerCharacter::SetMovementStates(EMovementStates NewMovementStates)
 	MovementStates = NewMovementStates;
 	OnMovementStateChanged.Broadcast(NewMovementStates);
 }
+
 
 void APlayerCharacter::SetGait(EGait NewGait)
 {
