@@ -125,7 +125,7 @@ public:
 
 	// Set Enums
 	UFUNCTION(BlueprintCallable, Category = "My States|Function")
-	void SetMovementState(EMovementStates NewMovementStates);
+	void SetMovementState(EMovementStates NewMovementState);
 
 	UFUNCTION(BlueprintCallable, Category = "My States|Function")
 	void SetGait(EGait NewGait);

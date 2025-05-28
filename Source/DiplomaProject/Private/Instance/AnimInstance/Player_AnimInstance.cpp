@@ -174,8 +174,6 @@ void UPlayer_AnimInstance::UpdateState()
 	}
 }
 
-
-
 #pragma endregion
 
 

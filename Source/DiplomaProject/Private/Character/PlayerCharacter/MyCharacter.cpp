@@ -158,8 +158,10 @@ void AMyCharacter::SwitchRotationMode()
 
 
 /*===================================== Struct & Enum =====================================*/
-void AMyCharacter::SetMovementState(EMovementStates NewMovementStates)
+void AMyCharacter::SetMovementState(EMovementStates NewMovementState)
 {
+	MovementState = NewMovementState;
+	MovementStateChanged.Broadcast(NewMovementState);
 }
 
 
@@ -172,6 +174,8 @@ void AMyCharacter::SetGait(EGait NewGait)
 
 void AMyCharacter::SetMovementPosition(EMovementPosition NewMovementPosition)
 {
+	MovementPosition = NewMovementPosition;
+	MovementPositionChanged.Broadcast(NewMovementPosition);
 }
 
 
@@ -187,7 +191,7 @@ void AMyCharacter::DrawCharacterVectorDirection()
 {
 	// Get Vector for Character Move Direction
 	FVector Velocity = GetVelocity();
-	Debug::PrintVector("Character Velocity: ", Velocity, 0.f, false, FColor::Green);
+	// Debug::PrintVector("Character Velocity: ", Velocity, 0.f, false, FColor::Green);
 
 	// Get Character Speed
 	float Speed = Velocity.Size();
