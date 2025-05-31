@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubSystems.h"
+#include "Controller/MainController.h"
 
 // Library
 #include "Kismet/KismetSystemLibrary.h"
@@ -73,7 +74,7 @@ void AMyCharacter::NotifyControllerChanged()
 {
 	Super::NotifyControllerChanged();
 
-	PlayerController = Cast<APlayerController>(GetController());
+	PlayerController = Cast<AMainController>(GetController());
 	
 	if(PlayerController)
 	{

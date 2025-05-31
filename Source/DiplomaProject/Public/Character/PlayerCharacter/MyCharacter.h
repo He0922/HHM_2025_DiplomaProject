@@ -16,6 +16,7 @@
 
 
 // Input class
+class AMainController;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
@@ -62,7 +63,7 @@ protected:
 protected:
 	// Player Controller
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Controller")
-	APlayerController* PlayerController;
+	AMainController* PlayerController;
 
 	// SpringArm Component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Custom Component")

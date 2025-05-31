@@ -109,8 +109,8 @@ void UMyAnimInstance::GenerateTrajectory(float HistorySamplingInterval, int Hist
 void UMyAnimInstance::UpdateNecessaryVariable()
 {
 	vVelocity = MovementComponent->Velocity;
-	GetFutureVelocity();
 	fSpeed2D = vVelocity.Size2D();
+	GetFutureVelocity();
 	IsStarting();
 	IsPivoting();
 }
