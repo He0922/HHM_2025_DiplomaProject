@@ -4,8 +4,15 @@
 #include "UObject/UnrealType.h"
 
 
+
+// Ê±¼ä´Á
+
+
+
+
 namespace Debug
 {
+    // Basic Data Types
 	static void Print(const FString& Msg,const float Time, bool PrintLog, const FColor& Color = FColor::MakeRandomColor(), int32 InKey = -1)
 	{
 		if (GEngine)
@@ -15,7 +22,6 @@ namespace Debug
 
 		if (PrintLog) { UE_LOG(LogTemp, Warning, TEXT("%s"), *Msg); }
 	}
-
 
 	static void PrintBool(const FString& Msg, bool bValue, const float Time, bool PrintLog, const FColor& Color = FColor::MakeRandomColor(), int32 InKey = -1)
 	{
@@ -69,6 +75,30 @@ namespace Debug
     }
 
 
+    // Complex Data Types
+    template<typename EnumType>
+    static void PrintEnum(const FString& Msg, EnumType Value, float Time, bool PrintLog, const FColor& Color = FColor::MakeRandomColor(), int32 InKey = -1)
+    {
+        const UEnum* EnumPtr = StaticEnum<EnumType>();
+        FString EnumString;
+        if (EnumPtr)
+        {
+            EnumString = EnumPtr->GetNameStringByValue(static_cast<int64>(Value));
+        }
+        else
+        {
+            EnumString = TEXT("Invalid Enum");
+        }
+
+        FString FullMsg = Msg + EnumString;
+
+        if (GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(InKey, Time, Color, FullMsg);
+        }
+
+        if (PrintLog) { UE_LOG(LogTemp, Warning, TEXT("%s"), *FullMsg); }
+    }
 
 	static void PrintHitResult(const FHitResult& HitResult, bool PrintLog, const float Time, const FColor& Color = FColor::MakeRandomColor(), int32 InKey = -1)
 	{

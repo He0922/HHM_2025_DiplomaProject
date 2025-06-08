@@ -29,11 +29,16 @@ class UCameraComponent;
 class UPlayer_CMC;
 
 
-
+// Enum Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMovementStateChanged, EMovementStates, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGaitChanged, EGait, NewGait);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMovementPositionChanged, EMovementPosition, NewPosition);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FRotationModeChanged, ERotationMode, NewRotationMode);
+
+
+// Land Delegate
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FIsJustLandedChanged, bool, NewIsJustLanded);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLandVelocityChanged, FVector, NewLandVelocity);
 
 
 UCLASS()
@@ -58,6 +63,15 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void Landed(const FHitResult& Hit) override;
+
+
+	// Delay struct parameter & Bind Function
+public:
+	/*-------------------------------CustomOnLandedEvent Delay-------------------------------*/
+	FLatentActionInfo CustomOnLandedEvent_LatentInfo;
+
+	UFUNCTION()
+	void CustomLandedEvent_OnDelayFinished();
 
 
 protected:
@@ -152,9 +166,34 @@ public:
 	FRotationModeChanged RotationModeChanged;
 
 
+/*======================================= Land =======================================*/
+public:
+	UPROPERTY(BlueprintAssignable, Category = "My Necessary Variable")
+	FIsJustLandedChanged IsLandedChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "My Necessary Variable")
+	FLandVelocityChanged LandVelocityChanged;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "My Necessary Variable")
+	FVector vLandVelocity;
+
+	UFUNCTION(BlueprintCallable, Category = "My Necessary Variable")
+	void SetLandVelocity(FVector NewLandVelocity);
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "My Necessary Variable")
+	bool bIsJustLanded = false;
+
+	UFUNCTION(BlueprintCallable, Category = "My Necessary Variable")
+	void SetIsJustLanded(bool NewIsJustLanded);
+
 /*======================================= Debug Draw =======================================*/
 public:
 	void DrawCharacterVectorDirection();
 
 	void DrawCameraVectorDirection();
+
+	void EnumDebug();
+
+	void VariablesDebug();
 };

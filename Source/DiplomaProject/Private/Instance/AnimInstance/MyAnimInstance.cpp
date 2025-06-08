@@ -34,11 +34,13 @@ void UMyAnimInstance::NativeInitializeAnimation()
 		PlayerCharacter->GaitChanged.AddDynamic(this, &UMyAnimInstance::GaitChanged);
 		PlayerCharacter->MovementPositionChanged.AddDynamic(this, &UMyAnimInstance::MovementPositionChanged);
 		PlayerCharacter->RotationModeChanged.AddDynamic(this, &UMyAnimInstance::RotationModeChanged);
+
+		PlayerCharacter->IsLandedChanged.AddDynamic(this, &UMyAnimInstance::IsJustLandedChanged);
+		PlayerCharacter->LandVelocityChanged.AddDynamic(this, &UMyAnimInstance::LandVelocityChanged);
 	
 		MovementComponent = PlayerCharacter->MovementComponent;
 	}
 
-	
 
 	if (!MovementComponent)
 	{
@@ -56,6 +58,9 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	GenerateTrajectory();
 	UpdateNecessaryVariable();
 	UpdateState();
+
+	EnumDebug();
+	VariablesDebug();
 }
 
 
@@ -67,6 +72,7 @@ void UMyAnimInstance::GaitChanged(EGait NewGait) { Gait = NewGait; }
 void UMyAnimInstance::MovementPositionChanged(EMovementPosition NewMovementPosition) { MovementPosition = NewMovementPosition; }
 
 void UMyAnimInstance::RotationModeChanged(ERotationMode NewRotationMode) { RotationMode = NewRotationMode; }
+
 
 
 /*================================== Generate Trajectory ===================================*/
@@ -81,9 +87,7 @@ void UMyAnimInstance::GenerateTrajectory(float HistorySamplingInterval, int Hist
 
 	InOutDesiredControllerYawLastUpdate = OwningCharacter->GetControlRotation().Yaw;
 
-	
-
-
+	// Call PoseSearchLibraray Generate Trajectory
 	UPoseSearchTrajectoryLibrary::PoseSearchGenerateTrajectory
 	(
 		this,
@@ -99,9 +103,7 @@ void UMyAnimInstance::GenerateTrajectory(float HistorySamplingInterval, int Hist
 	);
 	
 
-	Trajectory.DebugDrawTrajectory(GetWorld(), DebugThickness, HeightOffset);
-
-	
+	//Trajectory.DebugDrawTrajectory(GetWorld(), DebugThickness, HeightOffset);
 }
 
 
@@ -111,30 +113,34 @@ void UMyAnimInstance::UpdateNecessaryVariable()
 	vVelocity = MovementComponent->Velocity;
 	fSpeed2D = vVelocity.Size2D();
 	GetFutureVelocity();
+	IsMoving();
 	IsStarting();
 	IsPivoting();
+	UpdateLandingType();
 }
 
 
 FVector UMyAnimInstance::GetFutureVelocity(float FutureTime)
 {
-	UPoseSearchTrajectoryLibrary::GetTrajectoryVelocity(Trajectory, 0.0f, FutureTime, vFutureVelocity);
+	UPoseSearchTrajectoryLibrary::GetTrajectoryVelocity(Trajectory, 0.f, FutureTime, vFutureVelocity);
 
 	return vFutureVelocity;
 }
 
 
-bool UMyAnimInstance::IsStarting(float StartThreshold)
+void UMyAnimInstance::IsStarting(float StartThreshold)
 {
 	bIsMoving = IsMoving();
-	if (!bIsMoving) return false;
+	if (!bIsMoving)
+	{
+		bIsStarting = false;
+		return;
+	}
 
 	float fVelocityDiff = FMath::Abs((vFutureVelocity - vVelocity).Size2D());
 	bool bVelocityChangeExceeded = fVelocityDiff > StartThreshold;
 
 	bIsStarting = bVelocityChangeExceeded && bIsMoving;
-
-	return bIsStarting;
 }
 
 
@@ -148,7 +154,7 @@ bool UMyAnimInstance::IsMoving()
 }
 
 
-void UMyAnimInstance::IsPivoting()
+void UMyAnimInstance::IsPivoting(float RotationThreshold)
 {
 	FRotator rFurtureRotation = UKismetMathLibrary::MakeRotFromX(vFutureVelocity);
 	FRotator rVeclocity = UKismetMathLibrary::MakeRotFromX(vVelocity);
@@ -156,27 +162,57 @@ void UMyAnimInstance::IsPivoting()
 
 	float fRotatorYaw = UKismetMathLibrary::Abs(rRotator.Yaw);
 	
-	if (fRotatorYaw >= 30.f && bIsStarting)
+
+	if (fRotatorYaw >= RotationThreshold && bIsStarting && !bIsPivoting)
 	{
 		bIsPivoting = true;
-		Time = 0.f;
-	}
-
-	if (!bIsStarting)
-	{
-		bIsPivoting = false;
-		Time = 0.f;
+		PivotTimer = 0.f;
 	}
 
 	if (bIsPivoting)
 	{
-		Time += 1.f;
-		if (Time > 120.f)
+		PivotTimer += 1.f;
+		if (!bIsStarting || PivotTimer > 120.f)
 		{
 			bIsPivoting = false;
-			Time = 0.f;
+			PivotTimer = 0.f;
 		}
 	}
+}
+
+
+// Land
+void UMyAnimInstance::UpdateLandingType(float LightThreshold)
+{
+	if (!bIsJustLanded)
+	{
+		LandedType = ELandedType::None;
+		return;
+	}
+	float LandingSpeed = FMath::Abs(vLandVelocity.Z);
+
+	Debug::PrintFloat("LandingSpeed: ", LandingSpeed, 0.f, false, FColor::Red);
+
+	if (LandingSpeed > LightThreshold)
+	{
+		LandedType = ELandedType::Heavy;
+	}
+	else
+	{
+		LandedType = ELandedType::Light;
+	}
+}
+
+
+void UMyAnimInstance::IsJustLandedChanged(bool NewIsJustLanded)
+{ 
+	bIsJustLanded = NewIsJustLanded; 
+	
+}
+
+void UMyAnimInstance::LandVelocityChanged(FVector NewLandVelocity)
+{
+	vLandVelocity = NewLandVelocity;
 }
 
 
@@ -185,7 +221,6 @@ void UMyAnimInstance::UpdateState()
 {
 	UpdateMovementState();
 	UpdateMovementPosition();
-
 }
 
 
@@ -219,5 +254,35 @@ void UMyAnimInstance::UpdateMovementPosition()
 void UMyAnimInstance::UpdateRotationMode()
 {
 
+}
+
+
+
+void UMyAnimInstance::EnumDebug()
+{
+	Debug::Print("   ", 0.f, true);
+	Debug::Print("   ", 0.f, true);
+	Debug::Print("   ", 0.f, true);
+	Debug::Print("   ", 0.f, true);
+	Debug::Print("   ", 0.f, true);
+	Debug::Print("   ", 0.f, true);
+
+	Debug::PrintEnum("Movement State: ", MovementState, 0.f, true, FColor::Green);
+	Debug::PrintEnum("Gait: ", Gait, 0.f, true, FColor::Cyan);
+	Debug::PrintEnum("Movvement Position: ", MovementPosition, 0.f, true, FColor::Green);
+	Debug::PrintEnum("Rotation Mode: ", RotationMode, 0.f, true, FColor::Green);
+	Debug::PrintEnum("Landed Type: ", LandedType, 0.f, true, FColor::Green);
+}
+
+
+void UMyAnimInstance::VariablesDebug()
+{
+
+	//Debug::Print("   ", 0.f, false);
+	//Debug::Print("   ", 0.f, false);
+	//Debug::Print("   ", 0.f, false);
+	//Debug::PrintEnum("Landed Type: ", LandedType, 0.f, false, FColor::Cyan);
+	//Debug::PrintBool("Just Landed: ", bIsJustLanded, 0.f, false, FColor::Red);
+	//Debug::PrintFloat("fSpeed 2D: ", fSpeed2D, 0.f, false, FColor::Cyan);
 }
 

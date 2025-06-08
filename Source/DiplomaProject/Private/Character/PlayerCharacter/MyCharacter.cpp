@@ -57,6 +57,12 @@ AMyCharacter::AMyCharacter(const FObjectInitializer& ObjectInitializer)
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CustomOnLandedEvent_LatentInfo.Linkage = 0;
+	CustomOnLandedEvent_LatentInfo.UUID = GetUniqueID();
+	CustomOnLandedEvent_LatentInfo.ExecutionFunction = TEXT("CustomLandedEvent_OnDelayFinished");
+	CustomOnLandedEvent_LatentInfo.CallbackTarget = this;
+
 	
 }
 
@@ -65,8 +71,10 @@ void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	DrawCharacterVectorDirection();
-	DrawCameraVectorDirection();
+	//DrawCharacterVectorDirection();
+	//DrawCameraVectorDirection();
+	//EnumDebug();
+	VariablesDebug();
 }
 
 
@@ -106,7 +114,19 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AMyCharacter::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
+	FVector CurrentVelocity = GetVelocity();
 
+	SetLandVelocity(CurrentVelocity);
+	SetIsJustLanded(true);
+
+	UKismetSystemLibrary::Delay(GetWorld(), 1.f, CustomOnLandedEvent_LatentInfo);
+}
+
+
+/*-------------------------------CustomOnLandedEvent Delay-------------------------------*/
+void AMyCharacter::CustomLandedEvent_OnDelayFinished()
+{
+	SetIsJustLanded(false);
 }
 
 
@@ -187,6 +207,20 @@ void AMyCharacter::SetRotationMode(ERotationMode NewRotationMode)
 }
 
 
+
+
+void AMyCharacter::SetLandVelocity(FVector NewLandVelocity)
+{
+	vLandVelocity = NewLandVelocity;
+	LandVelocityChanged.Broadcast(NewLandVelocity);
+}
+
+void AMyCharacter::SetIsJustLanded(bool NewIsJustLanded)
+{ 
+	bIsJustLanded = NewIsJustLanded;
+	IsLandedChanged.Broadcast(NewIsJustLanded);
+}
+
 /*======================================= Debug Draw =======================================*/
 void AMyCharacter::DrawCharacterVectorDirection()
 {
@@ -226,4 +260,16 @@ void AMyCharacter::DrawCameraVectorDirection()
 
 	// Draw Arrow for Camera Forward Vector
 	UKismetSystemLibrary::DrawDebugArrow(this, Start, End, 40.f, FLinearColor::Red, 0.f, 3.f);
+}
+
+
+void AMyCharacter::EnumDebug()
+{
+
+}
+
+
+void AMyCharacter::VariablesDebug()
+{
+
 }

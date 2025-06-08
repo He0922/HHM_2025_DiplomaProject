@@ -9,6 +9,7 @@
 #include "Enum/MovementStatesEnum.h"
 #include "Enum/MovementPositionEnum.h"
 #include "Enum/RotationModeEnum.h"
+#include "Enum/LandedTypeEnum.h"
 #include "Struct/CharacterInputStateStruct.h"
 
 // Pose Search Library
@@ -69,7 +70,6 @@ protected:
 	UFUNCTION()
 	void RotationModeChanged(ERotationMode NewRotationMode);
 
-
 /*================================== Generate Trajectory ===================================*/
 protected:
 	UFUNCTION(BlueprintCallable, Category = "My Generate Trajectory")
@@ -114,8 +114,8 @@ protected:
 	float fSpeed2D;
 
 
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "My Necessary Variable")
-	bool IsStarting(float StartThreshold = 10.f);
+	UFUNCTION(BlueprintCallable, Category = "My Necessary Variable")
+	void IsStarting(float StartThreshold = 20.f);
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "My Necessary Variable")
 	bool bIsStarting;
 
@@ -126,18 +126,39 @@ protected:
 
 
 	UFUNCTION(BlueprintCallable, Category = "My Necessary Variable")
-	void IsPivoting();
+	void IsPivoting(float RotationThreshold = 30.f);
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "My Necessary Variable")
 	bool bIsPivoting;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "My Necessary Variable")
-	float Time;
+	float PivotTimer;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "My States")
+	ELandedType LandedType = ELandedType::None;
+
+	UFUNCTION()
+	void UpdateLandingType(float LightThreshold = 800.f);
+
+	float LandingHeavyThreshold = 300.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "My Necessary Variable")
+	bool bIsJustLanded = false;
+
+	UFUNCTION()
+	void IsJustLandedChanged(bool NewIsJustLanded);
+
+	UFUNCTION()
+	void LandVelocityChanged(FVector NewLandVelocity);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "My Necessary Variable")
+	FVector vLandVelocity;
+
 
 /*==================================== Update State =====================================*/
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Update Necessary State")
 	void UpdateState();
-
 
 	UFUNCTION(BlueprintCallable, Category = "Update Necessary State")
 	void UpdateMovementState();
@@ -152,5 +173,7 @@ protected:
 	void UpdateRotationMode();
 
 
-
+public:
+	void EnumDebug();
+	void VariablesDebug();
 };
